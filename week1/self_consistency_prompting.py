@@ -3,6 +3,7 @@ import re
 from collections import Counter
 from dotenv import load_dotenv
 from ollama import chat
+from client import client
 
 load_dotenv()
 
@@ -47,7 +48,7 @@ def test_your_prompt(system_prompt: str) -> bool:
     answers: list[str] = []
     for idx in range(NUM_RUNS_TIMES):
         print(f"Running test {idx + 1} of {NUM_RUNS_TIMES}")
-        response = chat(
+        response = client.chat(
             model="llama3.1:8b",
             messages=[
                 {"role": "system", "content": system_prompt},

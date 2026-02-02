@@ -3,6 +3,7 @@ import re
 from typing import List, Callable
 from dotenv import load_dotenv
 from ollama import chat
+from client import client
 
 load_dotenv()
 
@@ -56,7 +57,7 @@ def YOUR_CONTEXT_PROVIDER(corpus: List[str]) -> List[str]:
 
     For example, return [] to simulate missing context, or [corpus[0]] to include the API docs.
     """
-    return []
+    return [corpus[0]]
 
 
 def make_user_prompt(question: str, context_docs: List[str]) -> str:
@@ -96,7 +97,7 @@ def test_your_prompt(system_prompt: str, context_provider: Callable[[List[str]],
 
     for idx in range(NUM_RUNS_TIMES):
         print(f"Running test {idx + 1} of {NUM_RUNS_TIMES}")
-        response = chat(
+        response = client.chat(
             model="llama3.1:8b",
             messages=[
                 {"role": "system", "content": system_prompt},

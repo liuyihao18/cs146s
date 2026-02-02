@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple, Callable
 
 from dotenv import load_dotenv
 from ollama import chat
+from client import client
 
 load_dotenv()
 
@@ -70,7 +71,24 @@ TOOL_REGISTRY: Dict[str, Callable[..., str]] = {
 # ==========================
 
 # TODO: Fill this in!
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = """
+You are a helpful assistant that could call tools. You must output a JSON object specifying the tool to call and its arguments.
+Here is the format you must use (no extra text):
+<example>
+{
+    "tool": "",
+    "args": {
+        "file_path": ""
+    }
+}
+</example>
+
+Here is the tool you can call:
+- ["output_every_func_return_type(file_path: str) -> str"]: Returns a newline-delimited list of "name: return_type" for each top-level function in the specified Python file. The argument "file_path" is the path to the Python file to analyze. If "file_path" is an empty string, it analyzes the current script.
+
+Here is the file you are analyzing: 
+- week1/tool_calling.py
+"""
 
 
 def resolve_path(p: str) -> str:
@@ -100,7 +118,7 @@ def extract_tool_call(text: str) -> Dict[str, Any]:
 
 
 def run_model_for_tool_call(system_prompt: str) -> Dict[str, Any]:
-    response = chat(
+    response = client.chat(
         model="llama3.1:8b",
         messages=[
             {"role": "system", "content": system_prompt},
@@ -109,6 +127,7 @@ def run_model_for_tool_call(system_prompt: str) -> Dict[str, Any]:
         options={"temperature": 0.3},
     )
     content = response.message.content
+    print(content)
     return extract_tool_call(content)
 
 

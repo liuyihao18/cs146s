@@ -1,13 +1,24 @@
 import os
 from dotenv import load_dotenv
 from ollama import chat
+from client import client
 
 load_dotenv()
 
 NUM_RUNS_TIMES = 5
 
 # TODO: Fill this in!
-YOUR_SYSTEM_PROMPT = ""
+YOUR_SYSTEM_PROMPT = """
+You are an expert at reversing the order of letters in words. Given a word, you will output the word with its letters in reverse order. That is, the last letter becomes the first letter, the second to last letter becomes the second letter, and so on.
+Here are some examples:
+
+<example>
+Input: httpstatus
+Output: sutatsptth
+</example>
+
+Now, please reverse the order of letters in the following word.
+"""
 
 USER_PROMPT = """
 Reverse the order of letters in the following word. Only output the reversed word, no other text:
@@ -25,7 +36,7 @@ def test_your_prompt(system_prompt: str) -> bool:
     """
     for idx in range(NUM_RUNS_TIMES):
         print(f"Running test {idx + 1} of {NUM_RUNS_TIMES}")
-        response = chat(
+        response = client.chat(
             model="mistral-nemo:12b",
             messages=[
                 {"role": "system", "content": system_prompt},

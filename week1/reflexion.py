@@ -3,6 +3,7 @@ import re
 from typing import Callable, List, Tuple
 from dotenv import load_dotenv
 from ollama import chat
+from client import client
 
 load_dotenv()
 
@@ -15,7 +16,7 @@ Keep the implementation minimal.
 """
 
 # TODO: Fill this in!
-YOUR_REFLEXION_PROMPT = ""
+YOUR_REFLEXION_PROMPT = "You are a coding assistant that improves Python functions based on test failures. You need to output a correct function defination."\
 
 
 # Ground-truth test suite used to evaluate generated code
@@ -80,7 +81,7 @@ def evaluate_function(func: Callable[[str], bool]) -> Tuple[bool, List[str]]:
 
 
 def generate_initial_function(system_prompt: str) -> str:
-    response = chat(
+    response = client.chat(
         model="llama3.1:8b",
         messages=[
             {"role": "system", "content": system_prompt},
@@ -96,7 +97,14 @@ def your_build_reflexion_context(prev_code: str, failures: List[str]) -> str:
 
     Return a string that will be sent as the user content alongside the reflexion system prompt.
     """
-    return ""
+    return f"""
+Previous implementation:
+```python
+{prev_code}
+```
+Failures:
+{'\n'.join(f"- {f}" for f in failures)}
+    """
 
 
 def apply_reflexion(
@@ -107,7 +115,7 @@ def apply_reflexion(
 ) -> str:
     reflection_context = build_context(prev_code, failures)
     print(f"REFLECTION CONTEXT: {reflection_context}, {reflexion_prompt}")
-    response = chat(
+    response = client.chat(
         model="llama3.1:8b",
         messages=[
             {"role": "system", "content": reflexion_prompt},
