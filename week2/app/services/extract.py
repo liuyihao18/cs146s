@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import json
 import os
 import re
-from typing import List
-import json
-from typing import Any
-from ollama import chat
-from dotenv import load_dotenv
+from typing import Any, List
 
-load_dotenv()
+from ..config import settings
+from ..client import client
+from ..exceptions import LLMError, ValidationError
+
 
 BULLET_PREFIX_PATTERN = re.compile(r"^\s*([-*•]|\d+\.)\s+")
 KEYWORD_PREFIXES = (
@@ -66,7 +66,56 @@ def extract_action_items(text: str) -> List[str]:
     return unique
 
 
+def extract_action_items_llm(text: str, model: str | None = None) -> List[str]:
+    """
+    Extract action items using Ollama LLM with structured JSON output.
+
+    Args:
+        text: Input text to extract action items from.
+        model: Optional model override. Defaults to configured OLLAMA_MODEL.
+
+    Returns:
+        List of extracted action items.
+
+    Raises:
+        ValidationError: If input text is empty.
+        LLMError: If LLM call fails and heuristic fallback also fails.
+    """
+    if not text.strip():
+        raise ValidationError("Input text cannot be empty")
+
+    model_name = model or settings.ollama_model
+    schema = {"type": "array", "items": {"type": "string"}}
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "Extract action items from the user-provided notes. "
+                "Return ONLY a JSON array of strings. "
+                "Each string must be a concise, self-contained task."
+            ),
+        },
+        {"role": "user", "content": text},
+    ]
+
+    try:
+        response = client.chat(
+            model=model_name,
+            messages=messages,
+            format=schema,
+        )
+        content = response.get("message", {}).get("content", "")
+        parsed: Any = json.loads(content)
+        if isinstance(parsed, list) and all(isinstance(item, str) for item in parsed):
+            return [item.strip() for item in parsed if item.strip()]
+    except json.JSONDecodeError as e:
+        raise LLMError(f"Invalid JSON response from LLM: {str(e)}") from e
+    except Exception as e:
+        raise LLMError(f"LLM extraction failed: {str(e)}") from e
+
+
 def _looks_imperative(sentence: str) -> bool:
+    """Check if a sentence looks like an imperative command."""
     words = re.findall(r"[A-Za-z']+", sentence)
     if not words:
         return False
@@ -87,3 +136,4 @@ def _looks_imperative(sentence: str) -> bool:
         "investigate",
     }
     return first.lower() in imperative_starters
+
