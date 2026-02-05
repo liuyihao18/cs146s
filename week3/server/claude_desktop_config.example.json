@@ -1,0 +1,21 @@
+# Example Claude Desktop Configuration
+# 
+# Location (Windows): %APPDATA%\Claude\claude_desktop_config.json
+# Location (macOS): ~/Library/Application Support/Claude/claude_desktop_config.json
+# Location (Linux): ~/.config/Claude/claude_desktop_config.json
+#
+# Replace the path with your actual workspace path
+
+{
+    "mcpServers": {
+        "weather": {
+            "command": "python",
+            "args": [
+                "C:\\Users\\Spring\\Documents\\Program\\AI\\cs146s\\week3\\server\\main.py"
+            ],
+            "env": {
+                "OPENWEATHER_API_KEY": "your_api_key_here"
+            }
+        }
+    }
+}
